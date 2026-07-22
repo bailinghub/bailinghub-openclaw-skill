@@ -1,0 +1,21 @@
+name: ClawHub Preflight
+
+on:
+  pull_request:
+    paths:
+      - "skills/bailinghub-executor/**"
+      - ".github/workflows/clawhub-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dry-run:
+    uses: openclaw/clawhub/.github/workflows/skill-publish.yml@a230d962db64019462c2c8ee400755eb92169908
+    with:
+      skill_path: skills/bailinghub-executor
+      owner: bailinghub
+      tags: latest
+      dry_run: true
