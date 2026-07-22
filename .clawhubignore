@@ -1,0 +1,8 @@
+.github/
+tests/
+scripts/
+README.md
+SECURITY.md
+package.json
+package-lock.json
+

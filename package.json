@@ -1,0 +1,14 @@
+{
+  "name": "bailinghub-openclaw-skill-development",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node scripts/check-skill.mjs && node --check skills/bailinghub-executor/scripts/bailinghub-openclaw-executor.mjs && node --test tests/*.test.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}
+
