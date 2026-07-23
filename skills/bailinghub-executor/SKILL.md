@@ -43,6 +43,9 @@ metadata:
       - name: OPENCLAW_USE_GATEWAY
         required: false
         description: Set to 1 only when a separately managed OpenClaw Gateway should own the run.
+      - name: OPENCLAW_FORWARD_ENV
+        required: false
+        description: Comma-separated opt-in allowlist of additional environment variables required by OpenClaw.
       - name: BAILING_WAIT_MS
         required: false
         description: Long-poll wait from 1000 to 60000 milliseconds.
@@ -92,7 +95,8 @@ node scripts/bailinghub-openclaw-executor.mjs
 - Keep the connection outbound-only. Do not open an inbound port for this executor.
 - Use a token scoped only to the intended BailingHub target.
 - The bundled runner must remain the execution entrypoint. Do not replace it with a downloaded script or an arbitrary shell command.
-- The runner does not forward the executor token or BailingHub task-level tool credentials to OpenClaw.
+- The runner gives OpenClaw only a minimal process environment. Additional model-provider or network variables require explicit `OPENCLAW_FORWARD_ENV` opt-in.
+- The runner does not forward the executor token, BailingHub job metadata, internal project paths, or task-level tool credentials to OpenClaw.
 - Task text is shared with the configured OpenClaw runtime and its model provider. Confirm that this data path is allowed before processing sensitive work.
 - Treat BailingHub approval and audit records as governance evidence, not as a substitute for business-system authorization.
 - Read [Security boundary](references/security.md) before enabling a persistent or production route.

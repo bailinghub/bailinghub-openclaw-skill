@@ -27,10 +27,17 @@ for (const variable of ['BAILING_HUB_URL', 'BAILING_EXECUTOR_TOKEN', 'BAILING_TA
   requirePattern(new RegExp(`- ${variable}\\b`), `Missing required env declaration: ${variable}`);
 }
 
-requirePattern(/delete childEnv\[key\]/, 'Runner must strip BAILING_* variables before starting OpenClaw', runner);
+requirePattern(/CHILD_ENV_BASE_KEYS/, 'Runner must build the OpenClaw child environment from an explicit base allowlist', runner);
+requirePattern(/OPENCLAW_FORWARD_ENV/, 'Runner must require explicit opt-in for additional child environment variables', runner);
 requirePattern(/shell:\s*false/, 'Runner must invoke OpenClaw without a shell', runner);
 requirePattern(/claim_token/, 'Runner must report the dispatch claim token', runner);
 requirePattern(/HTTP is allowed only for loopback tests/, 'Runner must fail closed on non-loopback HTTP', runner);
+if (/\{\s*\.\.\.process\.env/.test(runner)) {
+  failures.push('Runner must not inherit the complete parent environment');
+}
+if (/BAILING_(JOB_ID|REQUEST_ID|METADATA|PROJECT_PATH)/.test(runner)) {
+  failures.push('Runner must not expose BailingHub job context through child environment variables');
+}
 
 if (/\bTODO\b|\[TODO/.test(skill)) failures.push('SKILL.md still contains TODO content');
 if (/OPENCLAW_FORWARD_BAILING_TOOLS/.test(skill + runner)) {

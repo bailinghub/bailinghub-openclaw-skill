@@ -11,6 +11,40 @@ const MAX_TASK_BYTES = 4 * 1024 * 1024;
 const MAX_STDOUT_BYTES = 4 * 1024 * 1024;
 const MAX_STDERR_BYTES = 256 * 1024;
 const REPORT_ATTEMPTS = 3;
+const CHILD_ENV_BASE_KEYS = [
+  'PATH',
+  'HOME',
+  'USER',
+  'LOGNAME',
+  'SHELL',
+  'TMPDIR',
+  'TMP',
+  'TEMP',
+  'LANG',
+  'LC_ALL',
+  'LC_CTYPE',
+  'XDG_CONFIG_HOME',
+  'XDG_DATA_HOME',
+  'XDG_CACHE_HOME',
+  'SYSTEMROOT',
+  'COMSPEC',
+  'PATHEXT',
+  'APPDATA',
+  'LOCALAPPDATA',
+  'USERPROFILE',
+];
+const FORBIDDEN_FORWARDED_ENV = new Set([
+  'OPENCLAW_FORWARD_ENV',
+  'NODE_OPTIONS',
+  'LD_PRELOAD',
+  'LD_LIBRARY_PATH',
+  'DYLD_INSERT_LIBRARIES',
+  'DYLD_LIBRARY_PATH',
+  'DYLD_FRAMEWORK_PATH',
+  'BASH_ENV',
+  'ENV',
+  'GIT_SSH_COMMAND',
+]);
 
 class ConfigError extends Error {}
 class PermanentProtocolError extends Error {}
@@ -33,6 +67,25 @@ function integerEnv(name, fallback, minimum, maximum) {
     throw new ConfigError(`${name} must be an integer from ${minimum} to ${maximum}`);
   }
   return value;
+}
+
+function forwardedEnvironmentNames() {
+  const raw = env('OPENCLAW_FORWARD_ENV');
+  if (!raw) return [];
+
+  const names = [...new Set(raw.split(',').map((value) => value.trim()).filter(Boolean))];
+  for (const name of names) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+      throw new ConfigError(`OPENCLAW_FORWARD_ENV contains an invalid variable name: ${name}`);
+    }
+    if (name.startsWith('BAILING_') || FORBIDDEN_FORWARDED_ENV.has(name)) {
+      throw new ConfigError(`OPENCLAW_FORWARD_ENV may not forward protected variable: ${name}`);
+    }
+    if (process.env[name] === undefined) {
+      throw new ConfigError(`OPENCLAW_FORWARD_ENV names an unset variable: ${name}`);
+    }
+  }
+  return names;
 }
 
 function safeIdentifier(value, label, maximum = 160) {
@@ -102,6 +155,7 @@ function buildConfig() {
       thinking: safeOptionalValue(env('OPENCLAW_THINKING'), 'OPENCLAW_THINKING'),
       timeoutSeconds,
       useGateway: env('OPENCLAW_USE_GATEWAY') === '1',
+      forwardEnv: forwardedEnvironmentNames(),
     },
   };
 }
@@ -292,21 +346,12 @@ function extractReply(data) {
   throw new Error(`OpenClaw returned no visible text (status=${status})`);
 }
 
-function sanitizedChildEnvironment(job) {
-  const childEnv = { ...process.env, NO_COLOR: '1' };
-  for (const key of Object.keys(childEnv)) {
-    if (key.startsWith('BAILING_')) delete childEnv[key];
+function sanitizedChildEnvironment(config) {
+  const childEnv = { NO_COLOR: '1' };
+  for (const key of CHILD_ENV_BASE_KEYS) {
+    if (process.env[key] !== undefined) childEnv[key] = process.env[key];
   }
-  Object.assign(childEnv, {
-    BAILING_JOB_ID: String(job?.job_id ?? ''),
-    BAILING_REQUEST_ID: String(job?.request_id ?? ''),
-    BAILING_TARGET: String(job?.target ?? ''),
-    BAILING_PROFILE: String(job?.profile ?? ''),
-    BAILING_SESSION_ID: String(job?.session?.sessionId ?? ''),
-    BAILING_IS_CONTINUE: job?.session?.isContinue ? '1' : '0',
-    BAILING_METADATA: JSON.stringify(job?.metadata ?? {}),
-    BAILING_PROJECT_PATH: String(job?.project_path ?? ''),
-  });
+  for (const key of config.openclaw.forwardEnv) childEnv[key] = process.env[key];
   return childEnv;
 }
 
@@ -330,7 +375,7 @@ async function runOpenClaw(config, job) {
 
     const stdout = await new Promise((resolve, reject) => {
       const child = spawn(config.openclaw.bin, args, {
-        env: sanitizedChildEnvironment(job),
+        env: sanitizedChildEnvironment(config),
         stdio: ['ignore', 'pipe', 'pipe'],
         shell: false,
       });

@@ -21,7 +21,7 @@ BailingHub control plane
   |  target-scoped claim / heartbeat / result (outbound HTTPS)
   v
 bundled BailingHub executor runner
-  |  one task, no BailingHub credentials inherited
+  |  one task, minimal allowlisted child environment
   v
 OpenClaw agent
   |  processed result
@@ -63,4 +63,3 @@ This project does not turn OpenClaw into the final authorization authority, does
 ## License
 
 ClawHub skills are distributed under MIT-0. See `LICENSE`.
-

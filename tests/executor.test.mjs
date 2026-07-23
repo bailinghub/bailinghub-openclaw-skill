@@ -39,7 +39,7 @@ async function readJson(request) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
-test('claims one task, runs OpenClaw, strips credentials, and reports the claim token', async (t) => {
+test('claims one task with an allowlisted child environment and reports the claim token', async (t) => {
   const temp = await mkdtemp(join(tmpdir(), 'bailinghub-openclaw-test-'));
   t.after(async () => rm(temp, { recursive: true, force: true }));
 
@@ -53,7 +53,9 @@ process.stdout.write(JSON.stringify({ payloads: [{ text: JSON.stringify({
   message,
   leakedExecutorToken: Boolean(process.env.BAILING_EXECUTOR_TOKEN),
   leakedToolToken: Boolean(process.env.BAILING_TOOL_TOKEN),
-  jobId: process.env.BAILING_JOB_ID
+  leakedUnrelatedSecret: Boolean(process.env.UNRELATED_TEST_SECRET),
+  leakedJobContext: Boolean(process.env.BAILING_JOB_ID || process.env.BAILING_METADATA || process.env.BAILING_PROJECT_PATH),
+  forwardedProviderKey: process.env.TEST_PROVIDER_KEY === 'test-provider-key'
 }) }] }));
 `, 'utf8');
   await chmod(fakeOpenClaw, 0o755);
@@ -106,6 +108,9 @@ process.stdout.write(JSON.stringify({ payloads: [{ text: JSON.stringify({
     BAILING_RUN_ONCE: '1',
     OPENCLAW_BIN: fakeOpenClaw,
     OPENCLAW_TIMEOUT_SECONDS: '10',
+    OPENCLAW_FORWARD_ENV: 'TEST_PROVIDER_KEY',
+    TEST_PROVIDER_KEY: 'test-provider-key',
+    UNRELATED_TEST_SECRET: 'must-not-leak',
     BAILING_TOOL_TOKEN: 'parent-tool-token-that-must-not-leak',
   });
 
@@ -119,7 +124,9 @@ process.stdout.write(JSON.stringify({ payloads: [{ text: JSON.stringify({
   assert.equal(openClawResult.message, 'Summarize the approved refund request.');
   assert.equal(openClawResult.leakedExecutorToken, false);
   assert.equal(openClawResult.leakedToolToken, false);
-  assert.equal(openClawResult.jobId, 'job-1');
+  assert.equal(openClawResult.leakedUnrelatedSecret, false);
+  assert.equal(openClawResult.leakedJobContext, false);
+  assert.equal(openClawResult.forwardedProviderKey, true);
   assert.ok(requests.every((item) => item.authorization === `Bearer ${token}`));
   assert.equal(requests[0].body.capabilities.runtime, 'openclaw');
   assert.equal(outcome.stdout.includes(token), false);
@@ -157,3 +164,16 @@ test('fails closed when the executor token is missing', async () => {
   assert.match(outcome.stderr, /BAILING_EXECUTOR_TOKEN/);
 });
 
+for (const protectedName of ['BAILING_EXECUTOR_TOKEN', 'NODE_OPTIONS']) {
+  test(`rejects forwarding protected environment variable ${protectedName}`, async () => {
+    const outcome = await run({
+      BAILING_HUB_URL: 'https://hub.example.com',
+      BAILING_EXECUTOR_TOKEN: 'token',
+      BAILING_TARGET: 'target',
+      OPENCLAW_FORWARD_ENV: protectedName,
+      [protectedName]: 'must-not-forward',
+    });
+    assert.equal(outcome.code, 2);
+    assert.match(outcome.stderr, /may not forward protected variable/);
+  });
+}

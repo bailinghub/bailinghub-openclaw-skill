@@ -47,6 +47,14 @@ export OPENCLAW_TIMEOUT_SECONDS="600"
 
 `OPENCLAW_USE_GATEWAY=1` switches from local execution to a separately managed OpenClaw Gateway. Leave it unset unless that gateway is already part of the deployment design.
 
+The child process receives only a minimal system environment by default. If this OpenClaw installation reads a model-provider key, proxy setting, or custom certificate path from an environment variable, opt in to only those exact names:
+
+```bash
+export OPENCLAW_FORWARD_ENV="OPENAI_API_KEY,HTTPS_PROXY,NODE_EXTRA_CA_CERTS"
+```
+
+Do not add unrelated shell, cloud, database, CI, or business-system credentials. `BAILING_*` control-plane variables and process-injection variables such as `NODE_OPTIONS` and `LD_PRELOAD` are always rejected.
+
 ## 4. Run one job
 
 From the installed skill directory:
@@ -79,6 +87,5 @@ Do not copy credentials into a service command line. On systemd, use a root-read
 | `401` from claim | Token is wrong, revoked, or issued by another BailingHub instance |
 | `403` from claim | Token exists but is not scoped to the requested target |
 | Executor online but no work | Route target and `BAILING_TARGET` do not match exactly |
-| OpenClaw process fails | Agent id, model credentials, local/gateway mode, and OpenClaw CLI version |
+| OpenClaw process fails | Agent id, local/gateway mode, OpenClaw CLI version, and whether required provider variables were explicitly named in `OPENCLAW_FORWARD_ENV` |
 | Result is rejected | Task was re-dispatched; the old claim token is intentionally stale |
-
