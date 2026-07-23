@@ -9,6 +9,7 @@ const runnerPath = join(skillDir, 'scripts', 'bailinghub-openclaw-executor.mjs')
 
 const skill = await readFile(skillPath, 'utf8');
 const runner = await readFile(runnerPath, 'utf8');
+const readme = await readFile(join(root, 'README.md'), 'utf8');
 
 const failures = [];
 const requirePattern = (pattern, message, source = skill) => {
@@ -22,6 +23,14 @@ requirePattern(/audit trails/i, 'Description must include the audit-trail search
 requirePattern(/existing business systems/i, 'Description must name existing business systems');
 requirePattern(/outbound executor/i, 'Description must name the outbound-executor role');
 requirePattern(/self-hosted/i, 'Description must make the external BailingHub dependency clear');
+requirePattern(
+  /clawhub install bailinghub\/bailinghub-executor/,
+  'README must use the verified ClawHub install slug',
+  readme,
+);
+if (/clawhub install @bailinghub\/bailinghub-executor/.test(readme)) {
+  failures.push('README still contains the invalid scoped ClawHub install slug');
+}
 
 for (const variable of ['BAILING_HUB_URL', 'BAILING_EXECUTOR_TOKEN', 'BAILING_TARGET']) {
   requirePattern(new RegExp(`- ${variable}\\b`), `Missing required env declaration: ${variable}`);

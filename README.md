@@ -38,7 +38,7 @@ After the catalog release is available:
 
 ```bash
 npm i -g clawhub
-clawhub install @bailinghub/bailinghub-executor
+clawhub install bailinghub/bailinghub-executor
 ```
 
 Then follow the installed skill's `SKILL.md`. A self-hosted BailingHub instance, an executor target, and a target-scoped token are required.
