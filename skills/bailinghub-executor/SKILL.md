@@ -112,3 +112,5 @@ Verify all of the following:
 5. A changed or replayed claim cannot overwrite a newer dispatch result.
 
 Report only the executor id, target, OpenClaw agent id, persistence mechanism, verification result, and remaining limitations. Never include credentials.
+
+For a public PASS, partial result, or failure, use the [BailingHub independent validation form](https://github.com/bailinghub/bailinghub/issues/new?template=independent_validation.yml), select the Executor or OpenClaw track, and follow the [canonical integration path](https://www.bailinghub.com/en/integrations#openclaw).
