@@ -43,6 +43,19 @@ clawhub install bailinghub/bailinghub-executor
 
 Then follow the installed skill's `SKILL.md`. A self-hosted BailingHub instance, an executor target, and a target-scoped token are required.
 
+## First Success and Feedback
+
+Use the [OpenClaw integration path](https://www.bailinghub.com/en/integrations#openclaw) as
+the canonical start page. The first integration is successful when the exact executor id
+comes online under the intended target, a dedicated task reaches a terminal state with a
+processed result, and stopping then restarting the runner changes liveness without changing
+its identity.
+
+Report a PASS, partial result, or failure through the
+[BailingHub independent validation form](https://github.com/bailinghub/bailinghub/issues/new?template=independent_validation.yml)
+and select the Executor or OpenClaw track. Never include tokens, model keys, personal
+information, or production business data.
+
 ## What is in this repository
 
 - `skills/bailinghub-executor/SKILL.md`: ClawHub discovery metadata and installation workflow.
