@@ -1,8 +1,21 @@
 # BailingHub Agent Governance Executor for OpenClaw
 
-Connect OpenClaw to a self-hosted BailingHub control plane as an outbound executor for governed business actions in existing business systems.
+Run an OpenClaw agent on a local or private machine as BailingHub's outbound executor.
+BailingHub can send it work that needs local files, a private codebase, or an internal-network
+tool—for example, reviewing a repository or processing a task that cannot run inside the Hub—
+without opening an inbound port on that machine.
 
-This integration is for teams that can already make an AI agent call tools, but still need a stable place for tool governance, human approval, audit trails, target-scoped execution, and operational control. OpenClaw processes the task; BailingHub owns the executor channel and governance path; the business system keeps final authorization.
+The flow is simple: the bundled runner polls BailingHub, claims one target-scoped task, lets
+OpenClaw process it, and returns the result. OpenClaw performs the assigned work; BailingHub
+keeps dispatch, human-approval, and audit control; the business system keeps final
+authorization.
+
+This is an outbound executor integration, not the interactive Agent Client or business-login
+path. It does not let a local model choose a BailingHub target, approval result, credential, or
+acting identity.
+
+Use this integration when an existing OpenClaw agent can perform the task but should not own
+dispatch, approvals, retry semantics, executor credentials, or final business authorization.
 
 ## Why users search for this
 

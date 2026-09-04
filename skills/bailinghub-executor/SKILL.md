@@ -1,6 +1,6 @@
 ---
 name: bailinghub-executor
-description: Connect OpenClaw to a self-hosted BailingHub agent governance control plane as an outbound executor for governed business actions, human approval, audit trails, and secure tool execution in existing business systems. Use when OpenClaw should process BailingHub jobs without exposing an inbound port or giving the model control-plane and business-system credentials.
+description: Run BailingHub jobs with an OpenClaw agent on a local or private machine, such as code review or private-network work. This outbound executor connects to a self-hosted BailingHub agent governance control plane for human approval and audit trails; existing business systems keep final authorization. Use when the executor must work without an inbound port or model-held credentials.
 metadata:
   openclaw:
     requires:
@@ -60,7 +60,14 @@ metadata:
 
 # BailingHub Agent Governance Executor
 
-Connect this OpenClaw installation to a self-hosted BailingHub control plane. The bundled runner keeps an outbound-only claim loop, sends each claimed task to OpenClaw, and returns the final result with stale-result protection.
+Use this OpenClaw installation to process work sent by a self-hosted BailingHub deployment—for
+example, local code review or a task that needs access to a private-network tool. The bundled
+runner keeps an outbound-only claim loop, sends each target-scoped task to OpenClaw, and returns
+the final result with stale-result protection; the machine never needs to expose an inbound port.
+
+This skill is an outbound executor, not an interactive Agent Client or business-login path.
+BailingHub controls which target can dispatch work and retains approval and audit state; the
+business system remains the final authorization boundary.
 
 Use this skill when the user is looking for agent governance, tool governance, human approval, audit trails, or secure AI-agent execution against existing business systems. It is an executor adapter, not an authorization service: BailingHub controls capability reach and governance gates, while the business system keeps final authority.
 
